@@ -13,6 +13,7 @@ namespace ETTools
         public string Type;
         public string Name;
         public string Desc;
+        public string DefaultValue;
     }
 
     public class ExcelMD5Info
@@ -45,30 +46,17 @@ namespace ETTools
         {
             try
             {
-                const string clientPath = "./Assets/Res/Config";
-
-               // if (GUILayout.Button("导出客户端配置"))
-                {
-                    isClient = true;
-				
-                    ExportAll(clientPath);
-				
-                    ExportAllClass(@"./Assets/Model/Entity/Config", "namespace ETModel\n{\n");
-                    ExportAllClass(@"./Assets/Hotfix/Entity/Config", "using ETModel;\n\nnamespace ETHotfix\n{\n");
-				
-                    Console.WriteLine($"导出客户端配置完成!");
-                }
-
-               // if (GUILayout.Button("导出服务端配置"))
-                {
-                    isClient = false;
-				
-                    ExportAll(ServerConfigPath);
-				
-                    ExportAllClass(@"../Server/Model/Entity/Config", "namespace ETModel\n{\n");
-				
-                    Console.WriteLine($"导出服务端配置完成!");
-                }
+               
+               // 导出服务端配置
+                
+                isClient = false;
+			
+                ExportAll(ServerConfigPath);
+			
+                ExportAllClass(@"../Server/Model/Entity/Config", "namespace ETModel\n{\n");
+			
+                Console.WriteLine($"导出服务端配置完成!");
+                
             }
             catch (Exception e)
             {
@@ -115,46 +103,34 @@ namespace ETTools
                 ISheet sheet = xssfWorkbook.GetSheetAt(0);
                 sb.Append(csHead);
 
-                sb.Append($"\t[Config({GetCellString(sheet, 0, 0)})]\n");
+                //sb.Append($"\t[Config({GetCellString(sheet, 0, 0)})]\n");
                 sb.Append($"\tpublic partial class {protoName}Category : ACategory<{protoName}>\n");
                 sb.Append("\t{\n");
                 sb.Append("\t}\n\n");
 
                 sb.Append($"\tpublic class {protoName}: IConfig\n");
                 sb.Append("\t{\n");
-                sb.Append("\t\tpublic long Id { get; set; }\n");
+                sb.Append("\t\tpublic int Id { get; set; }\n");
 
-                int cellCount = sheet.GetRow(3).LastCellNum;
+                int cellCount = sheet.GetRow(0).LastCellNum;
 
-                for (int i = 2; i < cellCount; i++)
+                for (int i = 1; i < cellCount; i++)
                 {
                     string fieldDesc = GetCellString(sheet, 2, i);
-
-                    if (fieldDesc.StartsWith("#"))
-                    {
-                        continue;
-                    }
-
-                    // s开头表示这个字段是服务端专用
-                    if (fieldDesc.StartsWith("s") && isClient)
-                    {
-                        continue;
-                    }
-
-                    string fieldName = GetCellString(sheet, 3, i);
+                    string fieldName = GetCellString(sheet, 0, i);
 
                     if (fieldName == "Id" || fieldName == "_id")
                     {
                         continue;
                     }
 
-                    string fieldType = GetCellString(sheet, 4, i);
+                    string fieldType = GetCellString(sheet, 1, i);
                     if (fieldType == "" || fieldName == "")
                     {
                         continue;
                     }
 
-                    sb.Append($"\t\tpublic {fieldType} {fieldName};\n");
+                    sb.Append($"\t\tpublic {ConvertType(fieldType)} {fieldName};\n");
                 }
 
                 sb.Append("\t}\n");
@@ -223,7 +199,11 @@ namespace ETTools
                 for (int i = 0; i < xssfWorkbook.NumberOfSheets; ++i)
                 {
                     ISheet sheet = xssfWorkbook.GetSheetAt(i);
-                    ExportSheet(sheet, sw);
+                    if (sheet.SheetName.Equals(protoName))
+                    {
+                        ExportSheet(sheet, sw);
+                    }
+                    
                 }
             }
 
@@ -232,21 +212,25 @@ namespace ETTools
 
         private static void ExportSheet(ISheet sheet, StreamWriter sw)
         {
-            int cellCount = sheet.GetRow(3).LastCellNum;
+            //行，列 从0开始
+            int cellCount = sheet.GetRow(0).LastCellNum;
 
             CellInfo[] cellInfos = new CellInfo[cellCount];
 
-            for (int i = 2; i < cellCount; i++)
+            for (int i = 1; i < cellCount; i++)
             {
-                string fieldDesc = GetCellString(sheet, 2, i);
-                string fieldName = GetCellString(sheet, 3, i);
-                string fieldType = GetCellString(sheet, 4, i);
-                cellInfos[i] = new CellInfo() { Name = fieldName, Type = fieldType, Desc = fieldDesc };
+                string fieldName = GetCellString(sheet, 0, i);
+                string fieldType = GetCellString(sheet, 1, i);
+                string fieldDesc = GetCellString(sheet, 3, i);
+                string defaultValue = GetCellString(sheet, 4, i);
+                
+                cellInfos[i] = new CellInfo() { Name = fieldName, Type = fieldType, Desc = fieldDesc, DefaultValue = defaultValue};
             }
 
-            for (int i = 5; i <= sheet.LastRowNum; ++i)
+            for (int i = 7; i <= sheet.LastRowNum; ++i)
             {
-                if (GetCellString(sheet, i, 2) == "")
+                //id 为空
+                if (GetCellString(sheet, i, 1) == "")
                 {
                     continue;
                 }
@@ -254,7 +238,7 @@ namespace ETTools
                 StringBuilder sb = new StringBuilder();
                 sb.Append("{");
                 IRow row = sheet.GetRow(i);
-                for (int j = 2; j < cellCount; ++j)
+                for (int j = 1; j < cellCount; ++j)
                 {
                     string desc = cellInfos[j].Desc.ToLower();
                     if (desc.StartsWith("#"))
@@ -262,45 +246,28 @@ namespace ETTools
                         continue;
                     }
 
-                    // s开头表示这个字段是服务端专用
-                    if (desc.StartsWith("s") && isClient)
-                    {
-                        continue;
-                    }
 
-                    // c开头表示这个字段是客户端专用
-                    if (desc.StartsWith("c") && !isClient)
-                    {
-                        continue;
-                    }
-
-                    string fieldValue = GetCellString(row, j);
-                    if (fieldValue == "")
-                    {
-                        throw new Exception($"sheet: {sheet.SheetName} 中有空白字段 {i},{j}");
-                    }
-
-                    if (j > 2)
+                    if (j > 1)
                     {
                         sb.Append(",");
                     }
 
                     string fieldName = cellInfos[j].Name;
-
-                    if (fieldName == "Id" || fieldName == "_id")
-                    {
-                        if (isClient)
-                        {
-                            fieldName = "Id";
-                        }
-                        else
-                        {
-                            fieldName = "_id";
-                        }
-                    }
+                    string fieldValue = GetCellString(sheet, i, j);
 
                     string fieldType = cellInfos[j].Type;
-                    sb.Append($"\"{fieldName}\":{Convert(fieldType, fieldValue)}");
+                    string defaultValue = cellInfos[j].DefaultValue;
+                    
+                    if (fieldValue == null || fieldValue.Equals(""))
+                    {
+                        sb.Append($"\"{fieldName}\":{Convert(fieldType, defaultValue)}");
+                    }
+                    else
+                    {
+                        sb.Append($"\"{fieldName}\":{Convert(fieldType, fieldValue)}");
+                    }
+                    
+                    
                 }
 
                 sb.Append("}");
@@ -308,6 +275,23 @@ namespace ETTools
             }
         }
 
+        private static string ConvertType(string type)
+        {
+            switch (type)
+            {
+                case "int":
+                case "int32":
+                case "int64":
+                case "long":
+                case "float":
+                case "double":
+                case "string":
+                    return type;
+                default:
+                    return "string";
+            }
+        }
+        
         private static string Convert(string type, string value)
         {
             switch (type)
@@ -326,9 +310,24 @@ namespace ETTools
                 case "double":
                     return value;
                 case "string":
-                    return $"\"{value}\"";
+                    if (value == null || value.Equals("null"))
+                    {
+                        return null;
+                    }
+                    else
+                    {
+                        return $"\"{value}\"";
+                    }
+                    
                 default:
-                    throw new Exception($"不支持此类型: {type}");
+                    if (value == null || value.Equals("null"))
+                    {
+                        return null;
+                    }
+                    else
+                    {
+                        return $"\"{value}\"";
+                    }
             }
         }
 

@@ -1,0 +1,2 @@
+{"Id":3001,"Name":"绿色武器1","ProfessionLimit":0,"Position":1,"PropertyMin":"1#100","PropertyMax":"1#200","Pool":1,"SecondNumMin":1,"SecondNumMax":1,"SkillId":0,"IfClear":1}
+{"Id":3002,"Name":"绿色武器2","ProfessionLimit":0,"Position":0,"PropertyMin":,"PropertyMax":,"Pool":0,"SecondNumMin":0,"SecondNumMax":0,"SkillId":0,"IfClear":0}
