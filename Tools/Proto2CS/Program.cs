@@ -16,8 +16,8 @@ namespace ETTools
     {
         public static void Main()
         {
-            Run("protoc.exe", "--csharp_out=\"../Unity/Assets/Model/Module/Message/\" --proto_path=\"./\" OuterMessage.proto");
-            Run("protoc.exe", "--csharp_out=\"../Unity/Assets/Hotfix/Module/Message/\" --proto_path=\"./\" HotfixMessage.proto");
+            Run("protoc.exe", "--csharp_out=\"./Message/\" --proto_path=\"./\" OuterMessage.proto");
+            Run("protoc.exe", "--csharp_out=\"./Message/\" --proto_path=\"./\" HotfixMessage.proto");
 
             // InnerMessage.proto生成cs代码
             InnerProto2CS.Proto2CS(); 
@@ -32,8 +32,8 @@ namespace ETTools
         }
 
         private const string protoPath = ".";
-        private const string clientMessagePath = "../Unity/Assets/Model/Module/Message/";
-        private const string hotfixMessagePath = "../Unity/Assets/Hotfix/Module/Message/";
+        private const string clientMessagePath = "./Message/";
+        private const string hotfixMessagePath = "./Message/";
         private static readonly char[] splitChars = { ' ', '\t' };
         private static readonly List<OpcodeInfo> msgOpcode = new List<OpcodeInfo>();
 
@@ -148,7 +148,7 @@ namespace ETTools
     public static class InnerProto2CS
     {
         private const string protoPath = ".";
-        private const string serverMessagePath = "../Server/Model/Module/Message/";
+        private const string serverMessagePath = "./Message/";
         private static readonly char[] splitChars = { ' ', '\t' };
         private static readonly List<OpcodeInfo> msgOpcode = new List<OpcodeInfo>();
 
