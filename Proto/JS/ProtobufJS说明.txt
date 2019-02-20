@@ -1,41 +1,56 @@
 Laya 使用egret的protobuf
 
-1，安装
+一，安装
 npm install protobufjs@6.8.4 -g
 npm install @egret/protobuf -g
 
-2，使用
+二，使用
 
-# 假设用户有个名为 egret-project 的白鹭项目(PS：laya项目也一样，这个名字不重要)
+1， 假设用户有个名为 egret-project 的白鹭项目(PS：laya项目也一样，这个名字不重要)
 
 cd egret-project
 
 
-# 将代码和项目结构拷贝至项目中
+2， 将代码和项目结构拷贝至项目中
 pb-egret add
 
 
-# 将 protofile 文件放在 egret-project/protobuf/protofile 文件夹中
+
+3， 上面的步骤生成protobuf目录，将protobuf目录复制到项目bin目录
+
+3， 将 proto file 文件放在 bin /protobuf/protofile 文件夹中
+
+4， 执行下面命令，文件将会生成到 protobuf/bundles 文件夹中
 pb-egret generate
 
-# 文件将会生成到 protobuf/bundles 文件夹中
 
+5，配置：
 然后将在protobuf-library.js和protobuf-bundles.js放到bin目录下的libs文件夹下
-在index.html引用protobuf-library.js和protobuf-bundles.js（先library.js再bundles.js）
+在index.js引用protobuf-library.js和protobuf-bundles.js（先library.js再bundles.js）
 
-<!--jsfile--Custon-->
-<script type="text/javascript" src="libs/protobuf-library.js"></script>
-<script type="text/javascript" src="libs/protobuf-bundles.js"></script>
+loadLib("libs/protobuf-library.js");
+loadLib("libs/protobuf-bundles.js");
 
-3, 使用方法:
+修改tsconfig.json, 添加
+  "include": [
+    "src",
+    "libs",
+    "bin/protobuf/**/*.d.ts"
+  ],
 
-//encode
-var  msg = pb.Msg.create();
-msg.args=["hello","hello2"];
-var buf = pb.Msg.encode(msg).finish();
 
-//decode
-var msg_rsp = pb.Msg.decode(buf);
-console.log(msg_rsp.args[0]):
-console.log(msg_rsp.args[1]):
+三, 使用方法:
+
+       //encode
+        var c2rLogin =  ETHotfix.C2R_Login.create();
+        c2rLogin.Account = "123";
+        c2rLogin.Password = "456";
+        c2rLogin.RpcId = 1;
+
+        var buf = ETHotfix.C2R_Login.encode(c2rLogin).finish();
+
+        //decode:
+        var c2rLoginDecode = ETHotfix.C2R_Login.decode(buf);
+        console.log(c2rLoginDecode.Account);
+        console.log(c2rLoginDecode.Password);
 
