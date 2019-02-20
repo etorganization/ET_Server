@@ -142,6 +142,20 @@ namespace ETTools
 
             string csPath = Path.Combine(outputPath, outputFileName + ".cs");
             File.WriteAllText(csPath, sb.ToString());
+            
+            //生成TS
+            StringBuilder sbts = new StringBuilder();
+            sbts.AppendLine($"export default class  {outputFileName}");
+            sbts.AppendLine("{");
+            foreach (OpcodeInfo info in msgOpcode)
+            {
+                sbts.AppendLine($"\t public  static {info.Name}:number = {info.Opcode};");
+            }
+
+            sbts.AppendLine("}");
+
+            string tsPath = Path.Combine(outputPath, outputFileName + ".ts");
+            File.WriteAllText(tsPath, sbts.ToString());
         }
     }
 
@@ -264,6 +278,7 @@ namespace ETTools
 
         private static void GenerateOpcode(string ns, string outputFileName, string outputPath)
         {
+            //生成c# 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"namespace {ns}");
             sb.AppendLine("{");
@@ -279,6 +294,8 @@ namespace ETTools
 
             string csPath = Path.Combine(outputPath, outputFileName + ".cs");
             File.WriteAllText(csPath, sb.ToString());
+            
+            
         }
 
         private static void Repeated(StringBuilder sb, string ns, string newline)
